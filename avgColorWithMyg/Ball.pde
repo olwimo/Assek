@@ -35,9 +35,9 @@ class Ball {
     }
   }
   void display() {
-    stroke (127);
+    stroke (255,0,0);
     strokeWeight (2);
-    fill (127);
+    fill (255,0,0);
     ellipse (location.x, location.y, mass*20, mass*20);
   }
 }
