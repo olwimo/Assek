@@ -19,6 +19,14 @@ class Blob {
     rect(minx, miny, maxx, maxy);
     
   }
+  
+  float getX(){
+   return minx + (maxx - minx) * 0.5;
+  }
+
+  float getY(){
+   return miny + (maxy - miny) * 0.5;
+  }
 
   void add(float x, float y) {
 

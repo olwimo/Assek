@@ -5,14 +5,17 @@ PImage img;
 
 color trackColor;
 
-float distThreshold = 25;
+float distThreshold = 250;
 
 float threshold = 25;
 
 ArrayList<Blob> blobs = new ArrayList<Blob>();
 
+
+
 void setup() {
-  size(512, 424, P3D);
+  //fullScreen(P3D);
+  size(640, 480, P3D);
   kinect = new KinectPV2(this);
 
 
@@ -28,6 +31,7 @@ void setup() {
 }
 
 void draw() {
+  //scale(0.5);
   background(255);
 
   img.loadPixels();
@@ -49,7 +53,8 @@ void draw() {
   }
 
   img.updatePixels();
-  image(img, 0, 0);
+  image(img, 0, 0, width, height);
+
 
   blobs.clear();
 
@@ -93,6 +98,32 @@ void draw() {
         }
       }
     }
+  }
+boolean showMeta = false;
+for (Blob b : blobs) {
+  if(b.size() < 4) {
+    showMeta = !showMeta;
+  }
+}
+
+
+  if (showMeta) {
+    colorMode(HSB);
+    loadPixels();
+    for (int x = 0; x<width; x++) {
+      for (int y = 0; y < height; y++) {
+        int index = x + y * width;
+        float sum = 0;
+        for (Blob b : blobs) {
+          float d = dist(x, y, b.getX(), b.getY());
+          sum += 15000/d;
+        }
+
+        pixels[index] = color(sum, 255, 255);
+      }
+    }
+    updatePixels();
+    colorMode(RGB);
   }
   for (Blob b : blobs) {
     if (b.size()>500) {
