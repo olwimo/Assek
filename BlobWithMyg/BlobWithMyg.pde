@@ -13,9 +13,11 @@ ArrayList<Blob> blobs = new ArrayList<Blob>();
 
 Ball[] balls;
 
+int counter = 0;
+
 void setup() {
   //fullScreen(P3D);
-  size(640, 480, P3D);
+
   kinect = new KinectPV2(this);
 
 
@@ -24,6 +26,8 @@ void setup() {
   //kinect.enableInfraredImg(true);
 
   kinect.init();
+
+  size(512, 424, P3D);
 
   img = createImage(kinect.WIDTHDepth, kinect.HEIGHTDepth, RGB);
 
@@ -131,30 +135,40 @@ void draw() {
   //  colorMode(RGB);
   //}
 
-  for ( Ball t : balls) {
-
-    PVector myg = PVector.random2D ();
-    t.applyForce(myg);
 
 
-    if (mousePressed) {
-      for (Blob b : blobs){
-      PVector mouse = new PVector(b.getX(), b.getY());
-      mouse.sub(t.location);
-      mouse.setMag(0.5);
-      t.applyForce(mouse);
-      }
+  for (int i = blobs.size()-1; i >= 0; i--) {
+    if (blobs.get(i).size()<1000) {
+      blobs.remove(i);
     }
-    // hej hej hej
-    t.move();
-    t.bounce();
-    t.display();
   }
 
-  for (Blob b : blobs) {
-    if (b.size()>1) {
-      b.show();
+    for (Ball myg : balls) {
+      PVector D = PVector.random2D();
+      myg.applyForce(D);
+
+
+
+      if (mousePressed) {
+        for (int i= 0; i < blobs.size(); i++) {
+          //for (Blob b : blobs) {
+        PVector mouse = blobs.get(i).getCenter();
+        mouse.sub(myg.location);
+        mouse.setMag(0.5);
+        myg.applyForce(mouse);
+          //}
+        }
+      }
+      myg.move();
+      myg.bounce();
+      myg.display();
     }
+
+
+
+
+  for (Blob b : blobs) {
+    b.show();
   }
 }
 

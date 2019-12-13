@@ -4,7 +4,7 @@ class Ball {
   PVector accelaration;
 
   float mass;
-
+  int id = 0;
 
   Ball() {
     location = new PVector(random(width), random(height));
