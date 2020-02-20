@@ -1,23 +1,66 @@
-import KinectPV2.*;
+// TODO: Winther saiz: To use actual Kinect data, un-comment the following "import..." line, and rename the dummy "KinectPV2" class in here to something else (like "KinectPV2Temp")
+//import KinectPV2.*;
 KinectPV2 kinect;
 
-PImage img;
+//PImage img;
 
-color trackColor;
+//color trackColor;
 
-float distThreshold = 250;
+// Winther saiz: I moved "distThreshold" to the "Blob" class, since that is where it is used if it's needed at all (I would remove this and Blob both completely, but that's another hornets nest entirely...) 
+//float distThreshold = 250;
 
-float threshold = 25;
+//float threshold = 25;
 
-ArrayList<Blob> blobs = new ArrayList<Blob>();
+//ArrayList<Blob> blobs = new ArrayList<Blob>();
 
+// Winther saiz: Dummy class, quick fix hack... HACK! HACK!! HACK!!! // TODO: Find a better way to fix things in the absence of a real Kinect
+public class KinectPV2 {
+  static final int WIDTHDepth = 320;
+  static final int HEIGHTDepth = 240;
+  int ticks;
+  KinectPV2(Object _) {
+  }
+  void enableDepthImg(boolean _) {
+  }
+  void enablePointCloud(boolean _) {
+  }
+  void enableInfraredImg(boolean _) {
+  }
+  void init() {
+    ticks = 0;
+  }
+  int[] getRawDepthData() {
+    int[] res = new int[WIDTHDepth*HEIGHTDepth];
+    double ocx = .5d;
+    double ocy = .5d;
+    double odia = .85d;
+    int pulse = 100;
+    double t = (double)(ticks++%pulse)*2d/(pulse-1)-1d;
 
+    odia -= .85d*t*t;
+
+    for (int y = 0; y < HEIGHTDepth; y++) {
+      for (int x = 0; x < WIDTHDepth; x++) {
+        double ax = 2d * ((((double)x+.5d) / WIDTHDepth) - ocx);
+        double ay = 2d * ((((double)y+.5d) / HEIGHTDepth) - ocy);
+        int d = (int)Math.round(1200*(odia - (ax*ax+ay*ay))/.85d);
+        if (d > 0) {
+          res[x+y*WIDTHDepth] = 1500-d;
+        } else {
+          res[x+y*WIDTHDepth] = 0;
+        }
+      }
+    }
+
+    return res;
+  }
+}
 
 void setup() {
   //fullScreen(P3D);
-  size(640, 480, P3D);
+  size(640, 480);
+  //size(640, 480, P3D);
   kinect = new KinectPV2(this);
-
 
   kinect.enableDepthImg(true);
   kinect.enablePointCloud(true);
@@ -25,111 +68,141 @@ void setup() {
 
   kinect.init();
 
-  img = createImage(kinect.WIDTHDepth, kinect.HEIGHTDepth, RGB);
+  //img = createImage(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, RGB);
 
-  trackColor = color(255, 0, 150);
+  //trackColor = color(255, 0, 150);
+
+  colorMode(HSB, 1f);
 }
 
 void draw() {
-  //scale(0.5);
-  background(255);
-
-  img.loadPixels();
-
   int[] depth = kinect.getRawDepthData();
+  //scale(0.5);
+  loadPixels();
 
-  for (int x = 0; x < kinect.WIDTHDepth; x++ ) {
-    for (int y = 0; y < kinect.HEIGHTDepth; y++ ) {
-      int offset = x + y * kinect.HEIGHTDepth;
-      int d = depth[offset];
+  background(0);
 
-      if (d>300 && d<1500) {
-
-        img.pixels[offset] = color(255, 0, 150);
-      } else {
-        img.pixels[offset] = color(0);
-      }
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      double kx = ((double)x/width) * KinectPV2.WIDTHDepth;
+       double ky = ((double)y/height) * KinectPV2.HEIGHTDepth;
+       double wx = kx % 1d;
+       double wy = ky % 1d;
+       int i = (int)Math.floor(kx) + (int)Math.floor(ky) * KinectPV2.WIDTHDepth;
+       int d = (int)Math.round((i+1)%KinectPV2.WIDTHDepth > 0 ? 
+       (((i/KinectPV2.WIDTHDepth)+1)%KinectPV2.HEIGHTDepth > 0 ?
+       (1d-wy)*((1d-wx)*depth[i]+wx*depth[i+1])+wy*((1d-wx)*depth[i+KinectPV2.WIDTHDepth]+wx*depth[i+KinectPV2.WIDTHDepth+1]) :
+       (1d-wx)*depth[i]+wx*depth[i+1]) :
+       (((i/KinectPV2.WIDTHDepth)+1)%KinectPV2.HEIGHTDepth > 0 ? (1d-wy)*depth[i]+wy*depth[i+KinectPV2.WIDTHDepth] : depth[i]));
+       if (d>=300 && d<1500) {
+       pixels[x+y*width] = color(((float)d-300f)/1200f, .5f, .5f);
+       } else {
+       pixels[x+y*width] = color(0);
+       }
     }
   }
 
-  img.updatePixels();
-  image(img, 0, 0, width, height);
+  updatePixels();
 
-
-  blobs.clear();
-
-  // Begin loop to walk through every pixel
-  for (int x = 0; x < img.width; x ++ ) {
-    for (int y = 0; y < img.height; y ++ ) {
-      int loc = x + y*img.width;
-      // What is current color
-      color currentColor = img.pixels[loc];
-      float r1 = red(currentColor);
-      float g1 = green(currentColor);
-      float b1 = blue(currentColor);
-      float r2 = red(trackColor);
-      float g2 = green(trackColor);
-      float b2 = blue(trackColor);
-
-      // Using euclidean distance to compare colors
-      float d = distSq(r1, g1, b1, r2, g2, b2); // We are using the dist( ) function to compare the current color with the color we are tracking.
-
-      // If current color is more similar to tracked color than
-      // closest color, save current location and current difference
-      if (d < threshold*threshold ) {
-        //worldRecord = d;
-        //avgX += x;
-        //avgY += y;
-        //count++;
-        //closestX = x;
-        //closestY = y;
-        boolean found = false;
-        for (Blob b : blobs) {
-          if (b.isNear(x, y)) {
-            b.add(x, y);
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) {
-          Blob b = new Blob(x, y);
-          blobs.add(b);
-        }
-      }
-    }
-  }
-boolean showMeta = false;
-for (Blob b : blobs) {
-  if(b.size() < 4) {
-    showMeta = !showMeta;
-  }
-}
-
-
-  if (showMeta) {
-    colorMode(HSB);
-    loadPixels();
-    for (int x = 0; x<width; x++) {
-      for (int y = 0; y < height; y++) {
-        int index = x + y * width;
-        float sum = 0;
-        for (Blob b : blobs) {
-          float d = dist(x, y, b.getX(), b.getY());
-          sum += 15000/d;
-        }
-
-        pixels[index] = color(sum, 255, 255);
-      }
-    }
-    updatePixels();
-    colorMode(RGB);
-  }
-  for (Blob b : blobs) {
-    if (b.size()>500) {
-      b.show();
-    }
-  }
+// TODO: Winther saiz: I'd remove all this commented code, but thought you might want to have a last look to see if you'll need anything, before it gets sent to the eternal /dev/null
+  /*
+  img.loadPixels();
+   
+   int[] depth = kinect.getRawDepthData();
+   
+   for (int x = 0; x < KinectPV2.WIDTHDepth; x++ ) {
+   for (int y = 0; y < KinectPV2.HEIGHTDepth; y++ ) {
+   int offset = x + y * KinectPV2.HEIGHTDepth;
+   int d = depth[offset];
+   
+   if (d>300 && d<1500) {
+   
+   img.pixels[offset] = color(255, 0, 150);
+   } else {
+   img.pixels[offset] = color(0);
+   }
+   }
+   }
+   
+   img.updatePixels();
+   image(img, 0, 0, width, height);
+   
+   
+   blobs.clear();
+   
+   // Begin loop to walk through every pixel
+   for (int x = 0; x < img.width; x ++ ) {
+   for (int y = 0; y < img.height; y ++ ) {
+   int loc = x + y*img.width;
+   // What is current color
+   color currentColor = img.pixels[loc];
+   float r1 = red(currentColor);
+   float g1 = green(currentColor);
+   float b1 = blue(currentColor);
+   float r2 = red(trackColor);
+   float g2 = green(trackColor);
+   float b2 = blue(trackColor);
+   
+   // Using euclidean distance to compare colors
+   float d = distSq(r1, g1, b1, r2, g2, b2); // We are using the dist( ) function to compare the current color with the color we are tracking.
+   
+   // If current color is more similar to tracked color than
+   // closest color, save current location and current difference
+   if (d < threshold*threshold ) {
+   //worldRecord = d;
+   //avgX += x;
+   //avgY += y;
+   //count++;
+   //closestX = x;
+   //closestY = y;
+   boolean found = false;
+   for (Blob b : blobs) {
+   if (b.isNear(x, y)) {
+   b.add(x, y);
+   found = true;
+   break;
+   }
+   }
+   
+   if (!found) {
+   Blob b = new Blob(x, y);
+   blobs.add(b);
+   }
+   }
+   }
+   }
+   boolean showMeta = false;
+   for (Blob b : blobs) {
+   if (b.size() < 4) {
+   showMeta = !showMeta;
+   }
+   }
+   
+   
+   if (showMeta) {
+   colorMode(HSB);
+   loadPixels();
+   for (int x = 0; x<width; x++) {
+   for (int y = 0; y < height; y++) {
+   int index = x + y * width;
+   float sum = 0;
+   for (Blob b : blobs) {
+   float d = dist(x, y, b.getX(), b.getY());
+   sum += 15000/d;
+   }
+   
+   pixels[index] = color(sum, 255, 255);
+   }
+   }
+   updatePixels();
+   colorMode(RGB);
+   }
+   for (Blob b : blobs) {
+   if (b.size()>500) {
+   b.show();
+   }
+   }
+   */
 }
 
 float distSq(float x1, float y1, float x2, float y2) {
@@ -137,7 +210,11 @@ float distSq(float x1, float y1, float x2, float y2) {
   return d;
 }
 
+// TODO: Winther saiz: Strongly consider using (64-bit) double-s instead of (32-bit) float-s
 float distSq(float x1, float y1, float z1, float x2, float y2, float z2) {
-  float d = (x2-x1)*(x2-x1) +(y2-y1)*(y2-y1)+(y2-y1)*(y2-y1);
-  return d;
+  float dx = x2 - x1;
+  float dy = y2 - y1;
+  float dz = z2 - z1;
+
+  return dx*dx + dy*dy + dz*dz;
 }

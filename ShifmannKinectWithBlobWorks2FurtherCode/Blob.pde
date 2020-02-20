@@ -3,6 +3,7 @@ class Blob {
   float miny;
   float maxx;
   float maxy;
+  static final float distThreshold = 250;
 
   Blob(float x, float y) {
     minx = x;
