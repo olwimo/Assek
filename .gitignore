@@ -1,0 +1,26 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Hidden files
+.*
+
+# Processing out
+out
+out/*
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Include .gitignore
+!.gitignore
+
+# Include lib
+!lib/*
