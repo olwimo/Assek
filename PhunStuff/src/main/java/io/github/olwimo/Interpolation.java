@@ -1,8 +1,9 @@
 package io.github.olwimo;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 
-public class Interpolation<T> {
+public class Interpolation<T extends Number> {
 
   public enum Type {
     Linear, 
@@ -11,16 +12,21 @@ public class Interpolation<T> {
       Exponential
   }
 
-  T frame[];
-  int dims[];
-  int length;
+  List<T[]> frame;
+  int[] dims;
+  int f_length;
+
+  public T get(double[] i) {
+
+  }
+
 
   public Interpolation () {
-    this(new int[] {0});
+    this(new int[] {});
   }
 
   public Interpolation (T[] frame) {
-    this(frame, new int[] {0});
+    this(frame, new int[] {});
   }
 
   public Interpolation (int[] dimensions) {
@@ -32,17 +38,17 @@ public class Interpolation<T> {
   }
 
   public Interpolation<T> setDimensions(int[] dimensions) {
-    if (dimensions.length == 0) dims = new int[]{0};
-    else dims = dimensions;
+    dims = dimensions;
     
-    length = Arrays.stream(dims).filter(x -> x > 0).reduce((x,y) -> x*y).orElse(0);
+    f_length = Arrays.stream(dims).filter(x -> x > 0).reduce((x,y) -> x*y).orElse(0);
+
+    frame = new LinkedList<T[]>();
 
     return this;
   }
 
-  public Interpolation<T> setFrame(T[] frame) {
-    if (length != 0 && length != frame.length) this.frame = null;
-    else this.frame = frame;
+  public Interpolation<T> addFrame(T[] frame) {
+    if (frame.length == f_length || f_length == 0) this.frame.add(frame);
 
     return this;
   }
