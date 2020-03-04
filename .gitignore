@@ -1,8 +1,8 @@
 # Compiled class file
-*.class
+src/*.class
 
 # Log file
-*.log
+src/*.log
 
 # Hidden files
 .*
@@ -12,15 +12,12 @@ out
 out/*
 
 # Package Files #
-*.jar
-*.war
-*.ear
-*.zip
-*.tar.gz
-*.rar
+src/*.jar
+src/*.war
+src/*.ear
+src/*.zip
+src/*.tar.gz
+src/*.rar
 
 # Include .gitignore
 !.gitignore
-
-# Include lib
-!lib/*
